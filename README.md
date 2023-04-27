@@ -27,15 +27,10 @@ and activated with:
 ```
 conda env create -f environment.yaml
 conda activate ldm
+pip install -r requirement.txt
+cd ckpt
+wget https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt
 ```
-
-You can also update an existing [latent diffusion](https://github.com/CompVis/latent-diffusion) environment by running
-
-```
-conda install pytorch torchvision -c pytorch
-pip install transformers==4.19.2 diffusers invisible-watermark
-pip install -e .
-``` 
 
 
 ## Stable Diffusion v1
@@ -49,37 +44,9 @@ then finetuned on 512x512 images.
 in its training data. 
 Details on the training procedure and data, as well as the intended use of the model can be found in the corresponding [model card](Stable_Diffusion_v1_Model_Card.md).*
 
-The weights are available via [the CompVis organization at Hugging Face](https://huggingface.co/CompVis) under [a license which contains specific use-based restrictions to prevent misuse and harm as informed by the model card, but otherwise remains permissive](LICENSE). While commercial use is permitted under the terms of the license, **we do not recommend using the provided weights for services or products without additional safety mechanisms and considerations**, since there are [known limitations and biases](Stable_Diffusion_v1_Model_Card.md#limitations-and-bias) of the weights, and research on safe and ethical deployment of general text-to-image models is an ongoing effort. **The weights are research artifacts and should be treated as such.**
 
-[The CreativeML OpenRAIL M license](LICENSE) is an [Open RAIL M license](https://www.licenses.ai/blog/2022/8/18/naming-convention-of-responsible-ai-licenses), adapted from the work that [BigScience](https://bigscience.huggingface.co/) and [the RAIL Initiative](https://www.licenses.ai/) are jointly carrying in the area of responsible AI licensing. See also [the article about the BLOOM Open RAIL license](https://bigscience.huggingface.co/blog/the-bigscience-rail-license) on which our license is based.
-
-### Weights
-
-We currently provide the following checkpoints:
-
-- `sd-v1-1.ckpt`: 237k steps at resolution `256x256` on [laion2B-en](https://huggingface.co/datasets/laion/laion2B-en).
-  194k steps at resolution `512x512` on [laion-high-resolution](https://huggingface.co/datasets/laion/laion-high-resolution) (170M examples from LAION-5B with resolution `>= 1024x1024`).
-- `sd-v1-2.ckpt`: Resumed from `sd-v1-1.ckpt`.
-  515k steps at resolution `512x512` on [laion-aesthetics v2 5+](https://laion.ai/blog/laion-aesthetics/) (a subset of laion2B-en with estimated aesthetics score `> 5.0`, and additionally
-filtered to images with an original size `>= 512x512`, and an estimated watermark probability `< 0.5`. The watermark estimate is from the [LAION-5B](https://laion.ai/blog/laion-5b/) metadata, the aesthetics score is estimated using the [LAION-Aesthetics Predictor V2](https://github.com/christophschuhmann/improved-aesthetic-predictor)).
-- `sd-v1-3.ckpt`: Resumed from `sd-v1-2.ckpt`. 195k steps at resolution `512x512` on "laion-aesthetics v2 5+" and 10\% dropping of the text-conditioning to improve [classifier-free guidance sampling](https://arxiv.org/abs/2207.12598).
-- `sd-v1-4.ckpt`: Resumed from `sd-v1-2.ckpt`. 225k steps at resolution `512x512` on "laion-aesthetics v2 5+" and 10\% dropping of the text-conditioning to improve [classifier-free guidance sampling](https://arxiv.org/abs/2207.12598).
-
-Evaluations with different classifier-free guidance scales (1.5, 2.0, 3.0, 4.0,
-5.0, 6.0, 7.0, 8.0) and 50 PLMS sampling
-steps show the relative improvements of the checkpoints:
-![sd evaluation results](assets/v1-variants-scores.jpg)
-
-
-
-### Text-to-Image with Stable Diffusion
-![txt2img-stable2](assets/stable-samples/txt2img/merged-0005.png)
-![txt2img-stable2](assets/stable-samples/txt2img/merged-0007.png)
-
-Stable Diffusion is a latent diffusion model conditioned on the (non-pooled) text embeddings of a CLIP ViT-L/14 text encoder.
-We provide a [reference script for sampling](#reference-sampling-script), but
-there also exists a [diffusers integration](#diffusers-integration), which we
-expect to see more active community development.
+### More Stable Diffusion weights
+The weights are available via [the CompVis organization at Hugging Face](https://huggingface.co/CompVis)
 
 #### Reference Sampling Script
 
@@ -90,19 +57,17 @@ We provide a reference sampling script, which incorporates
 - an [invisible watermarking](https://github.com/ShieldMnt/invisible-watermark)
   of the outputs, to help viewers [identify the images as machine-generated](scripts/tests/test_watermark.py).
 
-After [obtaining the `stable-diffusion-v1-*-original` weights](#weights), link them
-```
-mkdir -p models/ldm/stable-diffusion-v1/
-ln -s <path/to/model.ckpt> models/ldm/stable-diffusion-v1/model.ckpt 
-```
-and sample with
-```
-python scripts/txt2img.py --prompt "a photograph of an astronaut riding a horse" --plms 
-```
+Quick start text to image:
 
-By default, this uses a guidance scale of `--scale 7.5`, [Katherine Crowson's implementation](https://github.com/CompVis/latent-diffusion/pull/51) of the [PLMS](https://arxiv.org/abs/2202.09778) sampler, 
-and renders images of size 512x512 (which it was trained on) in 50 steps. All supported arguments are listed below (type `python scripts/txt2img.py --help`).
+```
+python scripts/txt2img.py --prompt "需要转图的英文prompt" --plms 
+```
+A good example:
+```
+python scripts/txt2img.py --prompt "Chinese ancient building, lotus blooming, Waterlily pond, Magnificent and fantastic John Howe landscape,summer, clouds, Fairy tale,light effect,super wide angle, Greg Rutkowski, unreal engine, James Gurney, artstation" --plms --ddim_steps 84 --H 768 --W 768 --n_samples 4 --scale 15 --seed 57
 
+```
+All supported arguments are listed below 
 
 ```commandline
 usage: txt2img.py [-h] [--prompt [PROMPT]] [--outdir [OUTDIR]] [--skip_grid] [--skip_save] [--ddim_steps DDIM_STEPS] [--plms] [--laion400m] [--fixed_code] [--ddim_eta DDIM_ETA]
